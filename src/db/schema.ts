@@ -78,3 +78,23 @@ export const releaseSnapshots = pgTable("release_snapshots", {
   snapshotData: jsonb("snapshot_data").notNull(),
   handoffText: text("handoff_text").notNull(),
 });
+
+export const providerConnections = pgTable("provider_connections", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  provider: text("provider").notNull(),
+  encryptedAccessToken: text("encrypted_access_token"),
+  refreshToken: text("refresh_token"),
+  expiresAt: timestamp("expires_at", { withTimezone: true }),
+  installationId: text("installation_id"),
+  accountLogin: text("account_login"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const oauthStates = pgTable("oauth_states", {
+  state: text("state").primaryKey(),
+  userId: text("user_id").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  consumedAt: timestamp("consumed_at", { withTimezone: true }),
+});
