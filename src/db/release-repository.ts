@@ -5,6 +5,7 @@ import type { ReleaseAssessment } from "../domain/release/evaluate-release";
 import type { RecommendedAction } from "../domain/release/prioritize-actions";
 import type { NormalizedJiraIssue } from "../connectors/jira/normalize";
 import type { CommitEvidence, PullRequestEvidence, WorkflowEvidence } from "../connectors/github/contracts";
+import type { ReleaseException } from "../domain/release/evaluate-release";
 
 export interface ReleaseConfiguration {
   id: string;
@@ -33,6 +34,7 @@ export interface StoredRelease {
   connectorErrors: Record<string, string>;
   baselineKeys: string[];
   fingerprint: string | null;
+  exceptions?: ReleaseException[];
 }
 
 export interface ReleaseRepository {
@@ -42,7 +44,7 @@ export interface ReleaseRepository {
 }
 
 function blank(config: ReleaseConfiguration): StoredRelease {
-  return { config, revision: 0, lastRefreshedAt: null, assessment: null, actions: [], evidence: {}, connectorErrors: {}, baselineKeys: [], fingerprint: null };
+    return { config, revision: 0, lastRefreshedAt: null, assessment: null, actions: [], evidence: {}, connectorErrors: {}, baselineKeys: [], fingerprint: null, exceptions: [] };
 }
 
 export class MemoryReleaseRepository implements ReleaseRepository {
@@ -65,6 +67,7 @@ export class MemoryReleaseRepository implements ReleaseRepository {
 export class PostgresReleaseRepository implements ReleaseRepository {
   async get(releaseId: string): Promise<StoredRelease | null> {
     const { db } = await import("./client");
+    const { exceptions } = await import("./schema");
     const [row] = await db.select().from(releases).where(eq(releases.id, releaseId)).limit(1);
     if (!row) return null;
     return {
@@ -77,6 +80,7 @@ export class PostgresReleaseRepository implements ReleaseRepository {
       connectorErrors: row.connectorErrors as Record<string, string>,
       baselineKeys: row.baselineKeys as string[],
       fingerprint: row.evidenceFingerprint,
+      exceptions: (await db.select().from(exceptions).where(eq(exceptions.releaseId, releaseId))).map((item) => ({ ruleId: item.ruleId, reason: item.reason, approverId: item.approverId })),
     };
   }
   private async loadEvidence(releaseId: string): Promise<StoredRelease["evidence"]> {

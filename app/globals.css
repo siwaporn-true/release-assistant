@@ -32,3 +32,6 @@ input, select { width: 100%; border: 1px solid #9aa6ba; border-radius: .5rem; pa
 .radio-row { display: flex; grid-template-columns: auto 1fr; align-items: center; margin: .5rem 0; }.radio-row input { width: auto; }
 .table-wrap { overflow-x: auto; } table { width: 100%; border-collapse: collapse; } th, td { text-align: left; padding: .8rem; border-bottom: 1px solid #e3e7ef; }
 @media (max-width: 42rem) { .release-header { display: block; } main { padding: 2rem 1rem; } }
+.action-dialog { display: grid; gap: .8rem; padding: 1rem; border: 1px solid #dce1eb; border-radius: .8rem; background: white; }
+.action-dialog textarea { min-height: 7rem; padding: .75rem; font: inherit; }
+.action-dialog dl { display: grid; grid-template-columns: 8rem 1fr; gap: .5rem; }.action-dialog dt { font-weight: 700; }.action-dialog dd { margin: 0; }

@@ -1,0 +1,2 @@
+"use client";
+export function RerunDialog({ repository, workflowId, branch, sha, onConfirm }: { repository: string; workflowId: string; branch: string; sha: string; onConfirm: () => void }) { return <section className="action-dialog"><h2>Re-run failed jobs?</h2><dl><dt>Repository</dt><dd>{repository}</dd><dt>Workflow</dt><dd>{workflowId}</dd><dt>Branch</dt><dd>{branch}</dd><dt>Commit SHA</dt><dd><code>{sha}</code></dd></dl><button type="button" onClick={onConfirm}>Confirm re-run</button></section>; }

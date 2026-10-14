@@ -68,11 +68,11 @@ export async function refreshReleaseWithDependencies(releaseId: string, actorId:
     code = evaluateCodeGate({ releaseBranch: current.config.releaseBranch, releaseCommitShas: knownReleaseShas, matches });
   }
   const build = connectorErrors.githubActions || !branchHead ? cannotVerify("github_actions_unavailable") : evaluateBuildGate({ currentSha: branchHead.sha, workflow });
-  const assessment = evaluateRelease({ scope, code, build, exceptions: [] });
+  const assessment = evaluateRelease({ scope, code, build, exceptions: current.exceptions ?? [] });
   const evidence = { ...current.evidence, ...(jiraIssues ? { jiraIssues } : {}), ...(pullRequests ? { pullRequests } : {}), ...(branchHead ? { branchHead } : {}), ...(workflow ? { workflow } : {}) };
   const fingerprint = stableFingerprint({ evidence, connectorErrors, assessment });
   const revision = fingerprint === current.fingerprint ? current.revision : current.revision + 1;
-  await deps.repository.saveRefresh(releaseId, { revision, lastRefreshedAt: deps.now().toISOString(), assessment, actions: prioritizeActions(assessment), evidence, connectorErrors, baselineKeys, fingerprint });
+  await deps.repository.saveRefresh(releaseId, { revision, lastRefreshedAt: deps.now().toISOString(), assessment, actions: prioritizeActions(assessment), evidence, connectorErrors, baselineKeys, fingerprint, exceptions: current.exceptions });
   return assessment;
 }
 

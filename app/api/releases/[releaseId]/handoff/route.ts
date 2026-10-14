@@ -1,0 +1,3 @@
+import { requireUser } from "../../../../../src/auth/session";
+import { createHandoff } from "../../../../../src/application/create-handoff";
+export async function POST(request: Request, context: { params: Promise<{ releaseId: string }> }) { try { const user = await requireUser(); const { releaseId } = await context.params; const body = await request.json(); return Response.json(await createHandoff({ ...body, releaseId, actorId: user.id }), { status: 201 }); } catch (error) { return Response.json({ error: error instanceof Error ? error.message : "Unable to create handoff" }, { status: 400 }); } }

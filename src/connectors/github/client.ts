@@ -15,8 +15,8 @@ export class GitHubConnectorError extends Error {
 export class GitHubClient {
   constructor(private readonly token: string, private readonly fetcher: Fetcher = fetch) {}
 
-  private async request(url: string): Promise<Response> {
-    const response = await this.fetcher(url, { headers: { authorization: `Bearer ${this.token}`, accept: "application/vnd.github+json", "x-github-api-version": "2022-11-28" } });
+  private async request(url: string, init: RequestInit = {}): Promise<Response> {
+    const response = await this.fetcher(url, { ...init, headers: { authorization: `Bearer ${this.token}`, accept: "application/vnd.github+json", "x-github-api-version": "2022-11-28", ...init.headers } });
     if (response.status === 429 || response.status === 403 && response.headers.get("x-ratelimit-remaining") === "0") throw new GitHubConnectorError("rate_limited", "GitHub rate limit exceeded");
     if (response.status >= 500) throw new GitHubConnectorError("unavailable", `GitHub unavailable (${response.status})`);
     if (!response.ok) throw new GitHubConnectorError("partial", `GitHub request failed (${response.status})`);
@@ -51,6 +51,10 @@ export class GitHubClient {
     if (!raw.workflow_runs?.[0]) throw new GitHubConnectorError("partial", "No workflow evidence found");
     return normalizeWorkflow(raw.workflow_runs[0], new Date());
   }
+
+  async rerunFailedJobs(owner: string, repo: string, runId: number): Promise<void> {
+    await this.request(`https://api.github.com/repos/${owner}/${repo}/actions/runs/${runId}/rerun-failed-jobs`, { method: "POST" });
+  }
 }
 
 function appJwt(): string {
@@ -76,3 +80,4 @@ export async function getReleaseBranchHead(input: GitHubReleaseInput) { return (
 export async function getWorkflowEvidence(input: GitHubReleaseInput & { sha: string; workflowId: string }) {
   return (await clientFor(input.userId)).getWorkflow(input.owner, input.repo, input.workflowId, input.releaseBranch);
 }
+export async function rerunFailedWorkflowJobs(input: { actorId: string; owner: string; repo: string; runId: number }) { return (await clientFor(input.actorId)).rerunFailedJobs(input.owner, input.repo, input.runId); }

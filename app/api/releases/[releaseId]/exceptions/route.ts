@@ -1,0 +1,3 @@
+import { requireUser } from "../../../../../src/auth/session";
+import { createException } from "../../../../../src/application/create-exception";
+export async function POST(request: Request, context: { params: Promise<{ releaseId: string }> }) { try { const user = await requireUser(); const { releaseId } = await context.params; const body = await request.json(); return Response.json(await createException({ ...body, releaseId, actorId: user.id }), { status: 201 }); } catch (error) { return Response.json({ error: error instanceof Error ? error.message : "Unable to create exception" }, { status: 400 }); } }
