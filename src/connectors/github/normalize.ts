@@ -10,7 +10,13 @@ function freshness(sourceUpdatedAt: string, observedAt: Date): EvidenceFreshness
   return observedAt.valueOf() - new Date(sourceUpdatedAt).valueOf() > 24 * 60 * 60 * 1000 ? "stale" : "fresh";
 }
 
-export function normalizePullRequest(raw: Record<string, any>, observedAt: Date): PullRequestEvidence {
+interface PullRequestPayload extends Record<string, unknown> {
+  errors?: unknown[];
+  head?: { ref?: unknown; sha?: unknown };
+  base?: { ref?: unknown };
+}
+
+export function normalizePullRequest(raw: PullRequestPayload, observedAt: Date): PullRequestEvidence {
   if (raw.errors?.length) throw new Error("Partial GitHub evidence");
   const sourceUpdatedAt = timestamp(raw.updated_at);
   return {
@@ -24,7 +30,7 @@ export function normalizePullRequest(raw: Record<string, any>, observedAt: Date)
   };
 }
 
-export function normalizeWorkflow(raw: Record<string, any>, observedAt: Date): WorkflowEvidence {
+export function normalizeWorkflow(raw: Record<string, unknown>, observedAt: Date): WorkflowEvidence {
   const sourceUpdatedAt = timestamp(raw.updated_at);
   const result = raw.status !== "completed" ? "checking" : raw.conclusion === "success" ? "passed" : raw.conclusion ? "failed" : "unknown";
   return {
