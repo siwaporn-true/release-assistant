@@ -15,6 +15,13 @@
       "when": 1791952580245,
       "tag": "0001_remarkable_fallen_one",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791952893076,
+      "tag": "0002_sour_liz_osborn",
+      "breakpoints": true
     }
   ]
 }

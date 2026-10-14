@@ -98,3 +98,12 @@ export const oauthStates = pgTable("oauth_states", {
   expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
   consumedAt: timestamp("consumed_at", { withTimezone: true }),
 });
+
+export const pullRequestSelections = pgTable("pull_request_selections", {
+  id: text("id").primaryKey(),
+  releaseId: text("release_id").notNull().references(() => releases.id),
+  jiraIssueKey: text("jira_issue_key").notNull(),
+  pullRequestNumber: integer("pull_request_number").notNull(),
+  selectedBy: text("selected_by").notNull(),
+  selectedAt: timestamp("selected_at", { withTimezone: true }).notNull().defaultNow(),
+});
