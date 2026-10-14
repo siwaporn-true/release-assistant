@@ -1,0 +1,7 @@
+{
+  "issues": [
+    {"id":"1","key":"SUN-100","fields":{"summary":"Reference epic","issuetype":{"name":"Epic"},"status":{"name":"In Progress"},"assignee":null,"updated":"2026-10-12T10:00:00.000+0700","customfield_10900":"ignored"}},
+    {"id":"2","key":"SUN-101","fields":{"summary":"Code story","issuetype":{"name":"Story-TrueApp"},"status":{"name":"DONE"},"assignee":{"accountId":"dev-1","displayName":"Developer"},"updated":"2026-10-12T11:00:00.000+0700"}},
+    {"id":"3","key":"SUN-102","fields":{"summary":"Blocking bug","issuetype":{"name":"Bug-TrueApp"},"status":{"name":"BLOCKED"},"assignee":{"accountId":"dev-2","displayName":"Developer 2"},"updated":"2026-10-12T12:00:00.000+0700"}}
+  ]
+}

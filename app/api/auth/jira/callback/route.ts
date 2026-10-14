@@ -29,12 +29,19 @@ export async function GET(request: NextRequest) {
   });
   if (!response.ok) return NextResponse.json({ error: "Jira connection failed" }, { status: 502 });
   const token = await response.json() as { access_token: string; refresh_token?: string; expires_in: number };
+  const resourcesResponse = await fetch("https://api.atlassian.com/oauth/token/accessible-resources", {
+    headers: { authorization: `Bearer ${token.access_token}`, accept: "application/json" },
+  });
+  const resources = resourcesResponse.ok
+    ? await resourcesResponse.json() as Array<{ id: string }>
+    : [];
   const key = process.env.CONNECTION_ENCRYPTION_KEY;
   if (!key) return NextResponse.json({ error: "Encryption is not configured" }, { status: 503 });
   await db.insert(providerConnections).values({
     id: crypto.randomUUID(),
     userId: record.userId,
     provider: "jira",
+    accountLogin: resources[0]?.id ?? null,
     encryptedAccessToken: encryptSecret(token.access_token, key),
     refreshToken: token.refresh_token ? encryptSecret(token.refresh_token, key) : null,
     expiresAt: new Date(Date.now() + token.expires_in * 1000),

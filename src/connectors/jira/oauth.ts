@@ -41,5 +41,8 @@ export async function getJiraAccess(userId: string): Promise<JiraAccess> {
   if (!connection?.encryptedAccessToken) throw new Error("Jira is not connected");
   const key = process.env.CONNECTION_ENCRYPTION_KEY;
   if (!key) throw new Error("CONNECTION_ENCRYPTION_KEY is required");
-  return { accessToken: decryptSecret(connection.encryptedAccessToken, key) };
+  return {
+    accessToken: decryptSecret(connection.encryptedAccessToken, key),
+    cloudId: connection.accountLogin ?? undefined,
+  };
 }
