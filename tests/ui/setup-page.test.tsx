@@ -3,7 +3,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { ConnectionStatusPanel } from "../../app/setup/page";
+import { ConnectionStatusPanel } from "../../src/components/connection-status-panel";
 
 describe("connection setup page", () => {
   it("renders connection state without serializing credentials", () => {

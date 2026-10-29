@@ -1,13 +1,5 @@
 "use client";
-
-import { useState, type FormEvent } from "react";
-
-export interface NewReleaseInput { jiraProjectKey: string; jiraFixVersionId: string; releaseBranch: string }
-export function NewReleaseForm({ projects = [], versions = [], onSubmit }: { projects?: Array<{ key: string; name: string }>; versions?: Array<{ id: string; name: string }>; onSubmit?: (input: NewReleaseInput) => void | Promise<void> }) {
-  const [project, setProject] = useState("");
-  const [version, setVersion] = useState("");
-  const [branch, setBranch] = useState("");
-  function submit(event: FormEvent) { event.preventDefault(); void onSubmit?.({ jiraProjectKey: project, jiraFixVersionId: version, releaseBranch: branch }); }
-  return <form className="setup-card" onSubmit={submit}><p className="eyebrow">New release</p><h1>Choose Jira scope</h1><label>Project<select aria-label="Project" required value={project} onChange={(event) => setProject(event.target.value)}><option value="">Select project</option>{projects.map((item) => <option key={item.key} value={item.key}>{item.key} — {item.name}</option>)}</select></label><label>Fix Version<select aria-label="Fix Version" required value={version} onChange={(event) => setVersion(event.target.value)}><option value="">Select Fix Version</option>{versions.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label><label>Release branch<input aria-label="Release branch" required value={branch} onChange={(event) => setBranch(event.target.value)} placeholder="release/12.3.0" /></label><button type="submit">Check release</button></form>;
-}
-export default function NewReleasePage() { return <main><NewReleaseForm /></main>; }
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { NewReleaseForm, type NewReleaseInput } from "../../../src/components/release/new-release-form";
+export default function NewReleasePage() { const router = useRouter(); const [projects, setProjects] = useState<Array<{ key: string; name: string }>>([]); const [versions, setVersions] = useState<Array<{ id: string; name: string }>>([]); useEffect(() => { void fetch("/api/jira/projects").then((response) => response.json()).then(setProjects); void fetch("/api/jira/fix-versions?projectKey=SUN").then((response) => response.json()).then(setVersions); }, []); async function submit(input: NewReleaseInput) { const response = await fetch("/api/releases", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...input, githubOwner: "org", githubRepo: "app", workflowId: "preprod.yml" }) }); const release = await response.json() as { id: string }; router.push(`/releases/${release.id}`); } return <main><NewReleaseForm projects={projects} versions={versions} onSubmit={submit} /></main>; }

@@ -3,8 +3,8 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { NewReleaseForm } from "../../app/releases/new/page";
-import { ReleaseWorkspace } from "../../app/releases/[releaseId]/page";
+import { NewReleaseForm } from "../../src/components/release/new-release-form";
+import { ReleaseWorkspace } from "../../src/components/release/release-workspace";
 
 afterEach(cleanup);
 
