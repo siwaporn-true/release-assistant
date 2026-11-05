@@ -16,14 +16,20 @@ export function evaluateCodeGate(input: { releaseBranch: string; releaseCommitSh
     if (match.status === "missing") { findings.push({ ruleId: "missing_pull_request", status: "blocked" }); continue; }
     if (match.status === "ambiguous") { findings.push({ ruleId: "ambiguous_pull_request", status: "needs_confirmation" }); continue; }
     const pr = match.pullRequest;
-    const finding =
-      pr.targetBranch !== input.releaseBranch ? "wrong_target_branch" :
-      !pr.merged ? "pull_request_open" :
-      pr.mergeable === false ? "pull_request_conflicted" :
-      pr.review !== "approved" ? "review_missing" :
-      pr.checks !== "passed" ? "checks_failed" :
-      !pr.mergeCommitSha || !input.releaseCommitShas.includes(pr.mergeCommitSha) ? "change_not_in_release" : null;
-    if (finding) findings.push({ ruleId: finding, status: "blocked", pullRequestNumber: pr.number });
+    const finding: GateFinding | null =
+      pr.targetBranch !== input.releaseBranch ? { ruleId: "wrong_target_branch", status: "blocked" } :
+      !pr.merged ? { ruleId: "pull_request_open", status: "blocked" } :
+      pr.mergeable === false ? { ruleId: "pull_request_conflicted", status: "blocked" } :
+      pr.review !== "approved" ? { ruleId: "review_missing", status: "blocked" } :
+      pr.checks === "failed" ? { ruleId: "checks_failed", status: "blocked" } :
+      pr.checks === "pending" ? { ruleId: "checks_pending", status: "checking" } :
+      pr.checks === "unknown" ? { ruleId: "checks_unknown", status: "cannot_verify" } :
+      !pr.mergeCommitSha || !input.releaseCommitShas.includes(pr.mergeCommitSha) ? { ruleId: "change_not_in_release", status: "blocked" } : null;
+    if (finding) findings.push({ ...finding, pullRequestNumber: pr.number });
   }
-  return { status: findings.some((item) => item.status === "blocked") ? "blocked" : findings.length ? "needs_confirmation" : "passed", findings };
+  const status = findings.some((item) => item.status === "blocked") ? "blocked" :
+    findings.some((item) => item.status === "cannot_verify") ? "cannot_verify" :
+    findings.some((item) => item.status === "checking") ? "checking" :
+    findings.length ? "needs_confirmation" : "passed";
+  return { status, findings };
 }

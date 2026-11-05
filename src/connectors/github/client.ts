@@ -2,7 +2,7 @@ import { createSign } from "node:crypto";
 
 import { getGitHubInstallation } from "./app-auth";
 import type { CommitEvidence, GitHubReleaseInput, PullRequestEvidence, WorkflowEvidence } from "./contracts";
-import { normalizePullRequest, normalizeWorkflow } from "./normalize";
+import { normalizeChecks, normalizePullRequest, normalizeWorkflow } from "./normalize";
 
 type Fetcher = (input: string | URL | Request, init?: RequestInit) => Promise<Response>;
 
@@ -30,11 +30,41 @@ export class GitHubClient {
       const response = await this.request(url);
       const observedAt = new Date();
       const raw = await response.json() as Array<Record<string, unknown>>;
-      result.push(...raw.map((item) => normalizePullRequest(item, observedAt)));
+      const pullRequests = raw.map((item) => normalizePullRequest(item, observedAt));
+      for (let offset = 0; offset < pullRequests.length; offset += 10) {
+        const batch = pullRequests.slice(offset, offset + 10);
+        result.push(...await Promise.all(batch.map(async (pullRequest) => ({
+          ...pullRequest,
+          checks: await this.getCommitChecks(owner, repo, pullRequest.headSha),
+        }))));
+      }
       const match = response.headers.get("link")?.match(/<([^>]+)>; rel="next"/);
       url = match?.[1];
     }
     return result;
+  }
+
+  private async getCommitChecks(owner: string, repo: string, sha: string): Promise<PullRequestEvidence["checks"]> {
+    const commitUrl = `https://api.github.com/repos/${owner}/${repo}/commits/${encodeURIComponent(sha)}`;
+    const [checkRuns, statuses] = await Promise.all([
+      this.getPaginatedItems<{ status?: unknown; conclusion?: unknown }>(`${commitUrl}/check-runs`, "check_runs"),
+      this.getPaginatedItems<{ state?: unknown }>(`${commitUrl}/status`, "statuses"),
+    ]);
+    return normalizeChecks({ checkRuns, statuses });
+  }
+
+  private async getPaginatedItems<T>(initialUrl: string, key: string): Promise<T[]> {
+    const items: T[] = [];
+    let url: string | undefined = initialUrl;
+    while (url) {
+      const response = await this.request(url);
+      const raw = await response.json() as Record<string, unknown>;
+      const page = raw[key];
+      if (Array.isArray(page)) items.push(...page as T[]);
+      const match = response.headers.get("link")?.match(/<([^>]+)>; rel="next"/);
+      url = match?.[1];
+    }
+    return items;
   }
 
   async getBranchHead(owner: string, repo: string, branch: string): Promise<CommitEvidence> {

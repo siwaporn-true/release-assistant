@@ -22,9 +22,12 @@ Create a GitHub App, install it only on repositories used for releases, and set:
 - Contents: read, for release-branch commit identity.
 - Pull requests: read, for merge/review/target-branch evidence.
 - Checks: read, for required-check outcomes.
+- Commit statuses: read, for legacy commit-status outcomes.
 - Actions: read and write; write is used only for a user-confirmed re-run of failed jobs.
 
 Configure the setup/callback URL as `https://<release-assistant-host>/api/auth/github/callback`. Set `GITHUB_APP_ID`, `GITHUB_APP_PRIVATE_KEY`, and `GITHUB_APP_SLUG`.
+
+After adding or changing a GitHub App repository permission, an organization or repository owner must approve the new permission for each existing installation before Release Assistant refreshes GitHub evidence again.
 
 ## Application secrets
 

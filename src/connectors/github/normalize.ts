@@ -16,6 +16,22 @@ interface PullRequestPayload extends Record<string, unknown> {
   base?: { ref?: unknown };
 }
 
+export function normalizeChecks(input: {
+  checkRuns: Array<{ status?: unknown; conclusion?: unknown }>;
+  statuses: Array<{ state?: unknown }>;
+}): PullRequestEvidence["checks"] {
+  const failedConclusions = new Set(["failure", "cancelled", "timed_out", "action_required", "startup_failure", "stale"]);
+  const passedConclusions = new Set(["success", "neutral", "skipped"]);
+  const conclusions = input.checkRuns.map((run) => run.conclusion == null ? null : String(run.conclusion));
+  const states = input.statuses.map((status) => String(status.state ?? ""));
+
+  if (conclusions.some((value) => value !== null && failedConclusions.has(value)) || states.some((value) => value === "failure" || value === "error")) return "failed";
+  if (input.checkRuns.some((run) => String(run.status ?? "") !== "completed") || states.some((value) => value === "pending")) return "pending";
+  if (!conclusions.length && !states.length) return "unknown";
+  if (conclusions.some((value) => value === null || !passedConclusions.has(value)) || states.some((value) => value !== "success")) return "unknown";
+  return "passed";
+}
+
 export function normalizePullRequest(raw: PullRequestPayload, observedAt: Date): PullRequestEvidence {
   if (raw.errors?.length) throw new Error("Partial GitHub evidence");
   const sourceUpdatedAt = timestamp(raw.updated_at);
